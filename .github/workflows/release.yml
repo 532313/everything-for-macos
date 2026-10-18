@@ -29,7 +29,8 @@ jobs:
         run: |
           set -euo pipefail
           APP_BIN=build/Everything.app/Contents/MacOS/Everything
-          MINOS="$(xcrun vtool -show-build "$APP_BIN" | awk '/minos/ {print $2}')"
+          MINOS="$(xcrun vtool -show-build "$APP_BIN" | awk '/minos/ {print $2}' \
+                   | sort -u | tr '\n' ' ' | sed 's/ *$//')"
 
           mkdir -p "dist/pkg/Everything-$TAG"
           cp -R build/Everything.app "dist/pkg/Everything-$TAG/"

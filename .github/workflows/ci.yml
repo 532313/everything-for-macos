@@ -41,7 +41,10 @@ jobs:
             *arm64*x86_64*|*x86_64*arm64*) ;;
             *) echo "::error::expected a universal binary, got: $ARCHS"; exit 1 ;;
           esac
-          MINOS="$(xcrun vtool -show-build "$APP" | awk '/minos/ {print $2}')"
+          # A universal binary prints one LC_BUILD_VERSION per slice: collapse
+          # to the set of distinct minimum versions.
+          MINOS="$(xcrun vtool -show-build "$APP" | awk '/minos/ {print $2}' \
+                   | sort -u | tr '\n' ' ' | sed 's/ *$//')"
           echo "minimum macOS: $MINOS"
           [ "$MINOS" = "13.0" ] || { echo "::error::unexpected deployment target $MINOS"; exit 1; }
 
