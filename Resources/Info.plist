@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>Everything</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.everythingformac.app</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Everything</string>
+    <key>CFBundleDisplayName</key>
+    <string>Everything</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Everything for macOS</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>Everything indexes your Desktop so that files can be found instantly.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>Everything indexes your Documents folder so that files can be found instantly.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>Everything indexes your Downloads folder so that files can be found instantly.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>Everything can index external volumes you select.</string>
+</dict>
+</plist>
