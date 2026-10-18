@@ -28,7 +28,7 @@ build:
 run: build
 	open "$(ROOT)/build/Everything.app"
 
-## 61 assertion self test over a synthetic tree (queries, increments, cache).
+## 68 assertion self test over a synthetic tree (queries, increments, cache).
 test: build
 	"$(ROOT)/build/everything-cli" --selftest
 
@@ -71,7 +71,7 @@ clean:
 help:
 	@echo "make build    build Everything.app + everything-cli"
 	@echo "make run      build and launch the app"
-	@echo "make test     61-assertion self test"
+	@echo "make test     68-assertion self test"
 	@echo "make verify   structural check of the index cache"
 	@echo "make tools    rebuild the developer tools (verify/thumb/winlist)"
 	@echo "make cli Q=query   search from the command line"

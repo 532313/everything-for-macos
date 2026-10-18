@@ -1,5 +1,9 @@
 # Everything for macOS
 
+[![CI](https://github.com/532313/everything-for-macos/actions/workflows/ci.yml/badge.svg)](https://github.com/532313/everything-for-macos/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/532313/everything-for-macos?display_name=tag&sort=semver)](https://github.com/532313/everything-for-macos/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Windows 版 **Everything** 的 macOS 原生复刻：一个**常驻内存的全盘文件索引**，加上**随打随出的即时搜索**。
 纯 Swift + AppKit 实现，只用 Xcode Command Line Tools 就能从源码构建（无需 Xcode 工程、无第三方依赖）。
 
@@ -12,15 +16,36 @@ build/everything-cli       ← 同一套索引引擎的命令行前端
 
 ## 1. 快速开始
 
+### 直接下载（无需编译）
+
+到 [Releases](https://github.com/532313/everything-for-macos/releases) 下载最新的
+`Everything-<版本>-macos.zip`，解压后把 `Everything.app` 拖进 `/Applications` 即可。
+产物是**通用二进制**（Apple Silicon + Intel），最低支持 **macOS 13**。
+
+> 应用使用 ad-hoc 签名（未做 Apple 公证），首次打开若被 Gatekeeper 拦下：
+> 右键点应用 → **打开** → 再点「打开」；或执行
+> `xattr -dr com.apple.quarantine /Applications/Everything.app`。
+
+### 从源码构建
+
 ```bash
-git clone git@github.com:532313/everything-for-macos.git
+git clone https://github.com/532313/everything-for-macos.git
 cd everything-for-macos
 make            # 等价于 ./build.sh：编译 App + CLI（清缓存约 40 秒）
 make run        # 构建并启动图形界面
-make test       # 61 项断言自测
+make test       # 68 项断言自测
 make verify     # 校验真实索引缓存的结构不变量
 make install    # 复制到 /Applications
 ```
+
+想构建通用二进制（同时含 Apple Silicon 与 Intel）：
+
+```bash
+UNIVERSAL=1 ./build.sh
+```
+
+`build.sh` 默认以 `-target <arch>-apple-macos13.0` 编译，所以产物的最低系统版本是 13.0
+（不加这个参数就会继承构建机的系统版本，例如 `minos 27.0`，别人就无法运行）。
 
 首次启动会在后台建立全盘索引（本机约 20 秒 / 180 万个对象），期间界面已经可用：搜索会作用于**已经索引的部分**，
 状态栏显示 `indexing… N objects` 与进度。索引建成后写入缓存（`~/Library/Application Support/Everything/index.bin`），
@@ -205,7 +230,7 @@ build/everything-cli -0 'ext:log' | xargs -0 du -h          # 管道友好
 build/everything-cli --count 'ext:tmp size:>1gb'            # 只要数量
 build/everything-cli --root /Volumes/Backup -n 50 'report*' # 换索引根
 build/everything-cli --watch 30 'ext:download'              # 常驻并打印增量变化
-build/everything-cli --selftest                             # 61 项断言
+build/everything-cli --selftest                             # 68 项断言
 EVERYTHING_UI_SMOKE=/tmp/ui EVERYTHING_UI_SMOKE_QUERY='ext:mp4' \
   ./build/Everything.app/Contents/MacOS/Everything           # UI 冒烟测试：遍历四种视图并截图
 ```
@@ -227,7 +252,7 @@ EVERYTHING_UI_SMOKE=/tmp/ui EVERYTHING_UI_SMOKE_QUERY='ext:mp4' \
 | 索引缓存 | 281 MB（`~/Library/Application Support/Everything/index.bin`），重启加载即用 |
 | 搜索延迟 | `swift` 6970 命中 **52 ms**；`ext:swift size:>10kb` 28 ms；`ext:png\|ext:jpg dm:thisyear` 43249 命中 46 ms；`!ext:txt !folder:` 144 万命中 40 ms |
 | 实时更新 | FSEvents 端到端实测：新建文件 → `1 matches`，删除 → `0 matches`（0.6 s 延迟 + 0.6 s 去抖） |
-| 自测 | **61 项断言全部通过**（查询语法、排序、top-K 截断、增量增删、同批重复事件、新目录递归、缓存往返） |
+| 自测 | **68 项断言全部通过**（查询语法、排序、top-K 截断、增量增删、同批重复事件、新目录递归、缓存往返） |
 | 结构校验 | `make verify` 对真实缓存做 8 项不变量检查（区间合法 / 名称是最后一段 / NUL 完整 / 严格升序 / 无重复 / 二分一致 / 子树区间自包含 / 访问器非空）→ **INDEX OK** |
 | 压力测试 | 批量新建 2000 + 删除 1000 + 整目录重命名 → 实时计数 2000→1000，旧路径 0 命中，校验 INDEX OK |
 | GUI 端到端 | 应用运行中新建文件 → 事件→合并→快照→退出落盘 → 直接读缓存查询命中 **1 of 1**，`!! add produced no record` 归零 |
@@ -258,7 +283,7 @@ Everything 服务/HTTP 服务器、ETP/FTP 协议、EFU 文件列表导出、文
 
 ```bash
 make            # 全量构建
-make test       # 61 项断言
+make test       # 68 项断言
 make verify     # 结构校验（真实缓存）
 
 # 只做类型检查（快）
@@ -272,7 +297,7 @@ swiftc -O -swift-version 5 -module-cache-path .modulecache \
 
 ### 质量保障（三层）
 
-1. **`--selftest`（61 项）**：在合成目录树上验证查询语义（AND/OR/NOT/分组/通配/正则/大小/日期/深度/属性/过滤器）、
+1. **`--selftest`（68 项）**：在合成目录树上验证查询语义（AND/OR/NOT/分组/通配/正则/大小/日期/深度/属性/过滤器）、
    top-K 截断、增量新增与删除、同批重复事件折叠、新目录递归展开、缓存往返。
 2. **`verify`**：直接读取真实索引缓存，逐条校验结构不变量，并在随机样本上交叉验证二分查找与子树区间。
    UI 侧另有 `EVERYTHING_UI_SMOKE` 冒烟测试，覆盖四种视图的切换与**滚动位置稳定性**。

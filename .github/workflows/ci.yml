@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build + self test (universal, macOS 13+)
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          swift --version
+          xcodebuild -version || true
+
+      - name: Build app + CLI (universal binary)
+        run: UNIVERSAL=1 ./build.sh
+
+      - name: Engine self test (68 assertions)
+        run: ./build/everything-cli --selftest
+
+      - name: Check binary portability
+        run: |
+          set -euo pipefail
+          APP=build/Everything.app/Contents/MacOS/Everything
+          ARCHS="$(lipo -archs "$APP")"
+          echo "architectures: $ARCHS"
+          case "$ARCHS" in
+            *arm64*x86_64*|*x86_64*arm64*) ;;
+            *) echo "::error::expected a universal binary, got: $ARCHS"; exit 1 ;;
+          esac
+          MINOS="$(xcrun vtool -show-build "$APP" | awk '/minos/ {print $2}')"
+          echo "minimum macOS: $MINOS"
+          [ "$MINOS" = "13.0" ] || { echo "::error::unexpected deployment target $MINOS"; exit 1; }
+
+      - name: Check app bundle
+        run: |
+          set -euo pipefail
+          codesign --verify --verbose=1 build/Everything.app
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" build/Everything.app/Contents/Info.plist
+          test -f build/Everything.app/Contents/Resources/AppIcon.icns
+          test -x build/everything-cli
+          echo "bundle ok"
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Everything-macos
+          path: build/
+          retention-days: 14

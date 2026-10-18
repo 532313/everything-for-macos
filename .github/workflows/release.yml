@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish ${{ github.ref_name }}
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app + CLI (universal, macOS 13+)
+        run: UNIVERSAL=1 ./build.sh
+
+      - name: Engine self test (68 assertions)
+        run: ./build/everything-cli --selftest
+
+      - name: Package
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          APP_BIN=build/Everything.app/Contents/MacOS/Everything
+          MINOS="$(xcrun vtool -show-build "$APP_BIN" | awk '/minos/ {print $2}')"
+
+          mkdir -p "dist/pkg/Everything-$TAG"
+          cp -R build/Everything.app "dist/pkg/Everything-$TAG/"
+          {
+            echo "Everything for macOS $TAG"
+            echo "======================"
+            echo ""
+            echo "1. Drag Everything.app into /Applications"
+            echo "2. First launch: right-click the app -> Open -> Open"
+            echo "   (ad-hoc signed, not notarized)"
+            echo "   or: xattr -dr com.apple.quarantine /Applications/Everything.app"
+            echo "3. Optional: grant Full Disk Access in System Settings -> Privacy & Security"
+            echo "   so protected folders (~/Library/Mail, other app containers) are indexed too"
+            echo ""
+            echo "Requirements: macOS 13 or newer, universal binary (Apple Silicon + Intel)"
+            echo "Built from: https://github.com/${{ github.repository }} @ ${{ github.sha }}"
+          } > "dist/pkg/Everything-$TAG/Install.txt"
+
+          ditto -c -k --keepParent "dist/pkg/Everything-$TAG" "dist/Everything-$TAG-macos.zip"
+          ditto -c -k build/everything-cli "dist/everything-cli-$TAG-macos.zip"
+          (cd dist && shasum -a 256 *.zip > SHA256SUMS.txt)
+          echo "minimum macOS: $MINOS"
+          ls -lh dist/*.zip
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --title "Everything for macOS $TAG" \
+            --generate-notes \
+            "dist/Everything-$TAG-macos.zip" \
+            "dist/everything-cli-$TAG-macos.zip" \
+            "dist/SHA256SUMS.txt"
